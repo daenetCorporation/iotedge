@@ -34,8 +34,8 @@ use url::Url;
 #[cfg(unix)]
 use docker::models::AuthConfig;
 use docker::models::{
-    ContainerConfigVolumes, ContainerCreateBody, ContainerHostConfig, ContainerNetworkSettings,
-    ContainerSummary, HostConfig, HostConfigPortBindings, ImageDeleteResponseItem,
+    ContainerCreateBody, ContainerHostConfig, ContainerNetworkSettings, ContainerSummary,
+    HostConfig, HostConfigPortBindings, ImageDeleteResponseItem,
 };
 use edgelet_core::{LogOptions, LogTail, Module, ModuleRegistry, ModuleRuntime, ModuleSpec};
 use edgelet_docker::{DockerConfig, DockerModuleRuntime};
@@ -289,6 +289,10 @@ fn container_create_handler(req: Request) -> Box<Future<Item = Response, Error =
                         .unwrap()
                 );
 
+                let volumes = create_options.volumes().unwrap();
+                println!("Volumes: {:?}", volumes);
+                assert_eq!(*volumes, json!({"/test1": {}, "/test2": {}}));
+
                 Ok(())
             })
             .map(|_| {
@@ -329,8 +333,7 @@ fn container_create_succeeds() {
         vec![HostConfigPortBindings::new().with_host_port("8080".to_string())],
     );
     let memory: i64 = 3221225472;
-    let mut volumes = ContainerConfigVolumes::new();
-    volumes.set_additional_properties(json!({"volume": "something"}));
+    let volumes = json!({"/test1": {}, "/test2": {}});
     let create_options = ContainerCreateBody::new()
         .with_host_config(
             HostConfig::new()
